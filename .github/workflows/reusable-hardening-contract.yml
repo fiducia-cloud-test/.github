@@ -1,0 +1,57 @@
+name: Reusable offline hardening contract
+
+on:
+  workflow_call:
+    inputs:
+      scenario-test:
+        description: Relative Python test path under hardening/
+        required: false
+        type: string
+        default: hardening/test_scenarios.py
+      scenario-data:
+        description: Relative JSON scenario path under hardening/
+        required: false
+        type: string
+        default: hardening/scenarios.json
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SCENARIO_TEST: ${{ inputs.scenario-test }}
+      SCENARIO_DATA: ${{ inputs.scenario-data }}
+    steps:
+      - name: Check out without persisted credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Validate bounded input paths
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import PurePosixPath
+          for name in ('SCENARIO_TEST', 'SCENARIO_DATA'):
+              path = PurePosixPath(os.environ[name])
+              assert not path.is_absolute()
+              assert '..' not in path.parts
+              assert path.parts and path.parts[0] == 'hardening'
+              assert all(part not in ('', '.') for part in path.parts)
+          PY
+      - name: Validate scenario schema and redaction
+        run: |
+          python3 - <<'PY'
+          import json, os
+          data = json.load(open(os.environ['SCENARIO_DATA'], encoding='utf-8'))
+          assert data['schemaVersion'] == 1
+          assert data['requiredInvariants']
+          assert data['scenarios']
+          raw = json.dumps(data).lower()
+          for marker in ('ghp_', 'github_pat_', 'client_secret=', 'authorization: bearer ', 'access_token=', 'refresh_token='):
+              assert marker not in raw
+          PY
+      - name: Run executable contract
+        run: python3 "$SCENARIO_TEST"
