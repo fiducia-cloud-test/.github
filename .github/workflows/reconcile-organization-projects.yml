@@ -1,0 +1,107 @@
+name: reconcile GitHub organization projects
+
+on:
+  push:
+    branches: [main, agent/reconcile-organization-projects]
+    paths:
+      - .github/workflows/reconcile-organization-projects.yml
+      - scripts/reconcile_github_projects.py
+      - tests/test_reconcile_github_projects.py
+      - docs/github-organization-project-reconciliation.md
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: reconcile-github-organization-projects
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      REGISTRY_COMMIT: db63f6912c78fe95b703fa770148263fad671703
+    steps:
+      - name: Export the protected fleet PAT without logging it
+        shell: bash
+        env:
+          STORED_FLEET_PAT: ${{ secrets.FLEET_GH_TOKEN }}
+        run: |
+          set -euo pipefail
+          test -n "$STORED_FLEET_PAT"
+          printf 'GH_TOKEN=%s\n' "$STORED_FLEET_PAT" >> "$GITHUB_ENV"
+
+      - name: Check out without persisted credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          show-progress: false
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12'
+
+      - name: Validate workflow syntax
+        uses: docker://rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667
+        with:
+          args: .github/workflows/reconcile-organization-projects.yml
+
+      - name: Verify identity and GitHub Project scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(gh api user --jq '.login')" = ORESoftware
+          gh project list --owner 3FA-app --limit 1 --format json >/dev/null
+
+      - name: Fetch the pinned canonical 41-project registry
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          gh api \
+            "repos/ORESoftware/k8s-cluster/contents/ops/registries/portfolio-project-links.csv?ref=${REGISTRY_COMMIT}" \
+            --jq '.content' \
+            | tr -d '\n' \
+            | base64 --decode \
+            > artifacts/portfolio-project-links.csv
+          test "$(($(wc -l < artifacts/portfolio-project-links.csv) - 1))" -eq 41
+
+      - name: Run credential-free unit tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONPATH=. python -m unittest discover \
+            -s tests \
+            -p 'test_reconcile_github_projects.py' \
+            -v
+          python -m py_compile \
+            scripts/reconcile_github_projects.py \
+            tests/test_reconcile_github_projects.py
+
+      - name: Reconcile all canonical GitHub Projects and Linear links
+        id: reconcile
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/reconcile_github_projects.py \
+            --registry artifacts/portfolio-project-links.csv \
+            --registry-commit "$REGISTRY_COMMIT" \
+            --apply \
+            --json-output artifacts/github-project-reconciliation.json \
+            --markdown-output artifacts/github-project-reconciliation.md
+          cat artifacts/github-project-reconciliation.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload reconciliation evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: github-project-reconciliation-${{ github.run_id }}
+          path: |
+            artifacts/portfolio-project-links.csv
+            artifacts/github-project-reconciliation.json
+            artifacts/github-project-reconciliation.md
+          if-no-files-found: warn
+          retention-days: 30
