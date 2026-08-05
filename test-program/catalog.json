@@ -1,0 +1,523 @@
+{
+  "schemaVersion": 1,
+  "auditedAt": "2026-08-05",
+  "program": {
+    "linearProject": "https://linear.app/denman/project/fiducia-cloud-8fd5e1bec9d3",
+    "parentIssue": "DEN-2353",
+    "catalogIssue": "DEN-2354",
+    "milestone": "Everything E2E — Full-System Certification",
+    "productionGitHubProject": "https://github.com/orgs/fiducia-cloud/projects/1",
+    "testGitHubProject": "https://github.com/orgs/fiducia-cloud-test/projects/1"
+  },
+  "inventory": {
+    "productionOrganization": "fiducia-cloud",
+    "productionRepositoryCount": 34,
+    "production": {
+      "governance": [
+        ".github"
+      ],
+      "active": [
+        "fiducia-customer.rs",
+        "fiducia-marketing.web",
+        "fiducia-routing.rs",
+        "fiducia-node.rs",
+        "fiducia-brain.rs",
+        "fiducia-load-balance.rs",
+        "fiducia-node-sidecar.rs",
+        "fiducia-edge",
+        "fiducia-clients",
+        "fiducia-infra",
+        "fiducia-auth.rs",
+        "fiducia-telemetry.rs",
+        "fiducia-admin.rs",
+        "fiducia-interfaces",
+        "fiducia-cli.rs",
+        "fiducia-monorepo",
+        "fiducia-test-config",
+        "fiducia-sync",
+        "fiducia-ai-agent-control-plane",
+        "fiducia-operations-control-plane",
+        "fiducia-ai-agent-bridge.rs",
+        "fiducia-e2e",
+        "fiducia-memory.rs",
+        "fiducia-messaging.rs",
+        "fiducia-ai-agent-manager.rs",
+        "fiducia-lambda-service.rs",
+        "fiducia-mcp-server.rs",
+        "fiducia-cloud.github.io",
+        "fiducia-payments.rs",
+        "fiducia-ai-agent-coordinator.rs"
+      ],
+      "archived": [
+        "fiducia-customer-ui.web"
+      ],
+      "superseded": [
+        "fiducia-memory",
+        "fiducia-messaging"
+      ]
+    },
+    "testOrganization": "fiducia-cloud-test",
+    "testRepositoryCount": 43,
+    "test": {
+      "governance": [
+        ".github"
+      ],
+      "languageSdkE2e": [
+        "fiducia-typescript-client-e2e",
+        "fiducia-python-client-e2e",
+        "fiducia-go-client-e2e",
+        "fiducia-rust-client-e2e",
+        "fiducia-java-client-e2e",
+        "fiducia-csharp-client-e2e",
+        "fiducia-dart-client-e2e",
+        "fiducia-gleam-client-e2e",
+        "fiducia-kotlin-client-e2e",
+        "fiducia-swift-client-e2e"
+      ],
+      "focused": {
+        "api-contract-e2e": {
+          "currentMaturity": "L1",
+          "targetMaturity": "L4"
+        },
+        "raft-consensus-chaos-e2e": {
+          "currentMaturity": "L1",
+          "targetMaturity": "L5"
+        },
+        "locks-leases-fencing-e2e": {
+          "currentMaturity": "L1",
+          "targetMaturity": "L5"
+        },
+        "semaphores-rate-limit-e2e": {
+          "currentMaturity": "L1",
+          "targetMaturity": "L4"
+        },
+        "idempotency-replay-e2e": {
+          "currentMaturity": "L1",
+          "targetMaturity": "L4"
+        },
+        "cron-failover-e2e": {
+          "currentMaturity": "L1",
+          "targetMaturity": "L5"
+        },
+        "routing-leader-election-e2e": {
+          "currentMaturity": "L1",
+          "targetMaturity": "L5"
+        },
+        "service-discovery-watch-e2e": {
+          "currentMaturity": "L1",
+          "targetMaturity": "L4"
+        },
+        "messaging-nats-dlq-e2e": {
+          "currentMaturity": "L1",
+          "targetMaturity": "L5"
+        },
+        "websocket-scale-e2e": {
+          "currentMaturity": "L1",
+          "targetMaturity": "L5"
+        },
+        "memory-resize-e2e": {
+          "currentMaturity": "L1",
+          "targetMaturity": "L5"
+        },
+        "auth-tenant-isolation-e2e": {
+          "currentMaturity": "L1",
+          "targetMaturity": "L5"
+        },
+        "telemetry-otel-e2e": {
+          "currentMaturity": "L1",
+          "targetMaturity": "L4"
+        },
+        "edge-partition-e2e": {
+          "currentMaturity": "L1",
+          "targetMaturity": "L5"
+        },
+        "sync-convergence-e2e": {
+          "currentMaturity": "L1",
+          "targetMaturity": "L5"
+        },
+        "control-plane-e2e": {
+          "currentMaturity": "L1",
+          "targetMaturity": "L5"
+        },
+        "lambda-service-e2e": {
+          "currentMaturity": "L1",
+          "targetMaturity": "L4"
+        },
+        "payments-idempotency-e2e": {
+          "currentMaturity": "L1",
+          "targetMaturity": "L5"
+        },
+        "infra-multicloud-e2e": {
+          "currentMaturity": "L1",
+          "targetMaturity": "L6"
+        },
+        "cli-contract-e2e": {
+          "currentMaturity": "L1",
+          "targetMaturity": "L4"
+        },
+        "mcp-contract-e2e": {
+          "currentMaturity": "L1",
+          "targetMaturity": "L4"
+        }
+      },
+      "cleanConsumers": [
+        "rust-client-consumer",
+        "typescript-client-consumer",
+        "go-client-consumer",
+        "python-client-consumer",
+        "java-client-consumer",
+        "kotlin-client-consumer",
+        "dart-client-consumer",
+        "swift-client-consumer",
+        "gleam-client-consumer",
+        "erlang-client-consumer"
+      ],
+      "packageIngestion": [
+        "package-ingestion-matrix"
+      ],
+      "groupDefaults": {
+        "languageSdkE2e": {
+          "currentMaturity": "L1",
+          "targetMaturity": "L4"
+        },
+        "cleanConsumers": {
+          "currentMaturity": "L1",
+          "targetMaturity": "L4"
+        },
+        "packageIngestion": {
+          "currentMaturity": "L1",
+          "targetMaturity": "L4"
+        },
+        "governance": {
+          "currentMaturity": "NA",
+          "targetMaturity": "NA"
+        }
+      }
+    },
+    "countIsSuccessMetric": false
+  },
+  "maturity": {
+    "NA": "governance or non-certification infrastructure",
+    "L0": "declared plan and immutable source/release intent",
+    "L1": "harness/schema self-test",
+    "L2": "real product artifact launched locally and behavior asserted",
+    "L3": "multi-component or multi-node local execution",
+    "L4": "independent test-org execution against pinned artifacts",
+    "L5": "destructive/scale/security/partition/recovery execution",
+    "L6": "staging/production-like certification with retained attestation"
+  },
+  "currentAssessment": {
+    "specializedAndConsumerDefault": "L1",
+    "certificationEvidenceVerifiedByCatalog": false,
+    "orchestrator": {
+      "repository": "fiducia-cloud/fiducia-e2e",
+      "maturity": "L3"
+    },
+    "rule": "Raise maturity only with retained evidence naming exact immutable artifacts and topology."
+  },
+  "truthfulnessRules": [
+    "Skipped, blocked, quarantined, or missing-capability execution never increases maturity.",
+    "Generated plans, source-pin checks, and profile-printing workflows are inventory, not product certification.",
+    "Release certification fails closed on missing or mutable artifacts, routes, credentials, topology, or evidence.",
+    "Repository count is never a success metric."
+  ],
+  "coverageDomains": {
+    "governance-and-test-platform": {
+      "production": [
+        ".github",
+        "fiducia-monorepo",
+        "fiducia-test-config",
+        "fiducia-e2e"
+      ],
+      "tests": [
+        ".github"
+      ],
+      "targetMaturity": "L3",
+      "issue": "DEN-2354",
+      "notes": "Governance and shared harness/orchestrator ownership; not an independent product gate by itself.",
+      "ownerIssue": "DEN-2354",
+      "cadence": [
+        "pull-request",
+        "main"
+      ],
+      "environments": [
+        "local"
+      ],
+      "evidenceContract": "signed-evidence-bundle-v1"
+    },
+    "core-consensus-routing-and-coordination": {
+      "production": [
+        "fiducia-routing.rs",
+        "fiducia-node.rs",
+        "fiducia-brain.rs",
+        "fiducia-load-balance.rs",
+        "fiducia-infra"
+      ],
+      "tests": [
+        "api-contract-e2e",
+        "raft-consensus-chaos-e2e",
+        "locks-leases-fencing-e2e",
+        "semaphores-rate-limit-e2e",
+        "idempotency-replay-e2e",
+        "cron-failover-e2e",
+        "routing-leader-election-e2e",
+        "service-discovery-watch-e2e",
+        "infra-multicloud-e2e"
+      ],
+      "targetMaturity": "L5",
+      "issue": "DEN-2356",
+      "ownerIssue": "DEN-2356",
+      "cadence": [
+        "pull-request",
+        "nightly",
+        "release-candidate"
+      ],
+      "environments": [
+        "local",
+        "three-node",
+        "three-cluster",
+        "provider-sandbox"
+      ],
+      "evidenceContract": "signed-evidence-bundle-v1"
+    },
+    "identity-edge-and-user-journeys": {
+      "production": [
+        "fiducia-customer.rs",
+        "fiducia-marketing.web",
+        "fiducia-node-sidecar.rs",
+        "fiducia-edge",
+        "fiducia-auth.rs",
+        "fiducia-admin.rs",
+        "fiducia-cloud.github.io"
+      ],
+      "tests": [
+        "auth-tenant-isolation-e2e",
+        "control-plane-e2e",
+        "edge-partition-e2e",
+        "telemetry-otel-e2e"
+      ],
+      "orchestrator": [
+        "fiducia-e2e:webapps",
+        "fiducia-e2e:browser"
+      ],
+      "targetMaturity": "L5",
+      "issue": "DEN-2357",
+      "gaps": [
+        "customer-journey-e2e",
+        "docs-quickstart-e2e",
+        "policy-rbac-abuse-e2e"
+      ],
+      "ownerIssue": "DEN-2357",
+      "cadence": [
+        "pull-request",
+        "nightly",
+        "release-candidate"
+      ],
+      "environments": [
+        "local",
+        "real-browser",
+        "remote-browser",
+        "provider-sandbox"
+      ],
+      "evidenceContract": "signed-evidence-bundle-v1"
+    },
+    "messaging-memory-sync-websocket-and-edge-recovery": {
+      "production": [
+        "fiducia-messaging.rs",
+        "fiducia-memory.rs",
+        "fiducia-sync",
+        "fiducia-edge",
+        "fiducia-ai-agent-bridge.rs"
+      ],
+      "tests": [
+        "messaging-nats-dlq-e2e",
+        "websocket-scale-e2e",
+        "memory-resize-e2e",
+        "sync-convergence-e2e",
+        "edge-partition-e2e"
+      ],
+      "targetMaturity": "L5",
+      "issue": "DEN-2358",
+      "ownerIssue": "DEN-2358",
+      "cadence": [
+        "pull-request",
+        "nightly",
+        "weekly"
+      ],
+      "environments": [
+        "local",
+        "broker",
+        "multi-node",
+        "load"
+      ],
+      "evidenceContract": "signed-evidence-bundle-v1"
+    },
+    "agent-operations-lambda-payments-and-telemetry": {
+      "production": [
+        "fiducia-ai-agent-control-plane",
+        "fiducia-operations-control-plane",
+        "fiducia-ai-agent-bridge.rs",
+        "fiducia-ai-agent-manager.rs",
+        "fiducia-ai-agent-coordinator.rs",
+        "fiducia-lambda-service.rs",
+        "fiducia-payments.rs",
+        "fiducia-telemetry.rs"
+      ],
+      "tests": [
+        "control-plane-e2e",
+        "lambda-service-e2e",
+        "payments-idempotency-e2e",
+        "telemetry-otel-e2e",
+        "messaging-nats-dlq-e2e"
+      ],
+      "targetMaturity": "L5",
+      "issue": "DEN-2359",
+      "gaps": [
+        "billing-metering-audit-e2e"
+      ],
+      "ownerIssue": "DEN-2359",
+      "cadence": [
+        "pull-request",
+        "nightly",
+        "release-candidate"
+      ],
+      "environments": [
+        "local",
+        "provider-sandbox",
+        "multi-service"
+      ],
+      "evidenceContract": "signed-evidence-bundle-v1"
+    },
+    "interfaces-clients-cli-mcp-and-packaging": {
+      "production": [
+        "fiducia-interfaces",
+        "fiducia-clients",
+        "fiducia-cli.rs",
+        "fiducia-mcp-server.rs"
+      ],
+      "tests": [
+        "fiducia-typescript-client-e2e",
+        "fiducia-python-client-e2e",
+        "fiducia-go-client-e2e",
+        "fiducia-rust-client-e2e",
+        "fiducia-java-client-e2e",
+        "fiducia-csharp-client-e2e",
+        "fiducia-dart-client-e2e",
+        "fiducia-gleam-client-e2e",
+        "fiducia-kotlin-client-e2e",
+        "fiducia-swift-client-e2e",
+        "rust-client-consumer",
+        "typescript-client-consumer",
+        "go-client-consumer",
+        "python-client-consumer",
+        "java-client-consumer",
+        "kotlin-client-consumer",
+        "dart-client-consumer",
+        "swift-client-consumer",
+        "gleam-client-consumer",
+        "erlang-client-consumer",
+        "package-ingestion-matrix",
+        "api-contract-e2e",
+        "cli-contract-e2e",
+        "mcp-contract-e2e"
+      ],
+      "targetMaturity": "L4",
+      "issue": "DEN-2362",
+      "gaps": [
+        "sdk-version-skew-e2e"
+      ],
+      "ownerIssue": "DEN-2362",
+      "cadence": [
+        "pull-request",
+        "main",
+        "nightly"
+      ],
+      "environments": [
+        "clean-consumer",
+        "local",
+        "published-package"
+      ],
+      "evidenceContract": "signed-evidence-bundle-v1"
+    },
+    "upgrade-recovery-and-release-operations": {
+      "production": [
+        "fiducia-infra",
+        "fiducia-node.rs",
+        "fiducia-brain.rs",
+        "fiducia-routing.rs",
+        "fiducia-load-balance.rs",
+        "fiducia-auth.rs",
+        "fiducia-messaging.rs",
+        "fiducia-memory.rs",
+        "fiducia-sync"
+      ],
+      "tests": [
+        "infra-multicloud-e2e",
+        "raft-consensus-chaos-e2e",
+        "edge-partition-e2e",
+        "telemetry-otel-e2e"
+      ],
+      "orchestrator": [
+        "fiducia-e2e:multicluster",
+        "fiducia-e2e:proof-hetzner"
+      ],
+      "targetMaturity": "L6",
+      "issue": "DEN-2363",
+      "gaps": [
+        "upgrade-downgrade-compat-e2e",
+        "backup-restore-dr-e2e",
+        "data-migration-rollback-e2e",
+        "supply-chain-provenance-e2e",
+        "operator-disaster-game-day-e2e"
+      ],
+      "ownerIssue": "DEN-2363",
+      "cadence": [
+        "weekly",
+        "release-candidate",
+        "game-day"
+      ],
+      "environments": [
+        "three-cluster",
+        "hetzner-vcluster",
+        "multi-cloud",
+        "clean-room"
+      ],
+      "evidenceContract": "signed-evidence-bundle-v1"
+    }
+  },
+  "proposedRepositories": {
+    "issue": "DEN-2367",
+    "state": "candidate-requires-catalog-gap-proof",
+    "names": [
+      "upgrade-downgrade-compat-e2e",
+      "backup-restore-dr-e2e",
+      "data-migration-rollback-e2e",
+      "supply-chain-provenance-e2e",
+      "policy-rbac-abuse-e2e",
+      "performance-regression-e2e",
+      "sdk-version-skew-e2e",
+      "customer-journey-e2e",
+      "docs-quickstart-e2e",
+      "billing-metering-audit-e2e",
+      "operator-disaster-game-day-e2e"
+    ]
+  },
+  "evidenceContracts": {
+    "signed-evidence-bundle-v1": {
+      "status": "planned",
+      "issue": "DEN-2355",
+      "requiredFields": [
+        "runIdentity",
+        "artifactIdentities",
+        "topologyIdentity",
+        "deterministicSeed",
+        "assertions",
+        "failureClassification",
+        "telemetryReferences",
+        "cleanupResult",
+        "artifactHashes"
+      ],
+      "releaseMode": "fail-closed"
+    }
+  }
+}
