@@ -31,7 +31,7 @@ jobs:
   provision:
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 90
     steps:
       - name: Export the protected fleet PAT without logging it
         shell: bash
@@ -74,6 +74,28 @@ jobs:
             --specs config/standard-e2e-specs.json.gz.b64 \
             --json-output artifacts/standard-e2e-plan.json \
             --markdown-output artifacts/standard-e2e-plan.md
+
+      - name: Wait for sufficient authenticated GitHub API budget
+        shell: bash
+        run: |
+          set -euo pipefail
+          while :; do
+            rate="$(gh api rate_limit)"
+            remaining="$(jq -r '.resources.core.remaining' <<<"$rate")"
+            reset="$(jq -r '.resources.core.reset' <<<"$rate")"
+            if [ "$remaining" -ge 200 ]; then
+              echo "Authenticated core API budget: $remaining"
+              break
+            fi
+            now="$(date +%s)"
+            sleep_for="$((reset - now + 5))"
+            if [ "$sleep_for" -lt 1 ] || [ "$sleep_for" -gt 3700 ]; then
+              echo "invalid rate-limit reset window: remaining=$remaining reset=$reset now=$now" >&2
+              exit 1
+            fi
+            echo "Core API budget is $remaining; holding mutation until the authenticated reset."
+            sleep "$sleep_for"
+          done
 
       - name: Verify authenticated organization administration
         shell: bash
