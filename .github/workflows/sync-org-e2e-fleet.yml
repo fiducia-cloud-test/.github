@@ -1,4 +1,4 @@
-name: sync organization E2E and CI fleet
+name: publish organization E2E and CI fleet audit
 
 on:
   push:
@@ -6,42 +6,56 @@ on:
       - main
       - agent/provision-org-e2e-projects-v1
     paths:
-      - .github/scripts/sync-org-e2e-fleet.sh
+      - .github/data/e2e-projects.tsv
+      - .github/data/e2e-pull-requests.tsv
+      - .github/scripts/render-e2e-fleet-audit.py
       - .github/workflows/sync-org-e2e-fleet.yml
+      - docs/e2e-ci-fleet.md
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: sync-org-e2e-fleet-${{ github.ref }}
+  group: publish-org-e2e-fleet-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  audit-and-sync:
+  validate-and-publish:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
-      - name: Validate workflow and script syntax
+      - name: Validate GitHub Actions
         uses: docker://rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667
         with:
           args: .github/workflows/sync-org-e2e-fleet.yml
-      - name: Export the fleet credential without logging it
-        shell: bash
+      - name: Validate renderer syntax without creating bytecode
         env:
-          STORED_FLEET_PAT: ${{ secrets.FLEET_GH_TOKEN }}
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: |
+          python3 - <<'PY'
+          import ast
+          from pathlib import Path
+          ast.parse(Path('.github/scripts/render-e2e-fleet-audit.py').read_text())
+          PY
+      - name: Validate exact-merge ledgers and render the audit
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: python3 .github/scripts/render-e2e-fleet-audit.py
+      - name: Require the checked-in report to cover every owner and pull request
+        shell: bash
         run: |
           set -euo pipefail
-          test -n "$STORED_FLEET_PAT"
-          printf 'GH_TOKEN=%s\n' "$STORED_FLEET_PAT" >> "$GITHUB_ENV"
-      - name: Sync organization projects and audit delivered E2E coverage
-        shell: bash
-        run: bash .github/scripts/sync-org-e2e-fleet.sh
+          tail -n +2 .github/data/e2e-projects.tsv | while IFS=$'\t' read -r owner _; do
+            grep -Fq "${owner}" docs/e2e-ci-fleet.md
+          done
+          tail -n +2 .github/data/e2e-pull-requests.tsv | while IFS=$'\t' read -r repository pr _rest; do
+            grep -Fq "${repository}#${pr}" docs/e2e-ci-fleet.md
+          done
       - name: Publish organization E2E fleet audit
-        if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: organization-e2e-fleet-audit
