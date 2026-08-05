@@ -1,0 +1,109 @@
+name: provision standard E2E repositories
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/provision-standard-e2e-repositories.yml
+      - scripts/provision_standard_e2e_repositories.py
+      - tests/test_provision_standard_e2e_repositories.py
+      - config/standard-e2e-specs.json.gz.b64
+      - docs/standard-e2e-repository-provisioning.md
+      - docs/standard-e2e-provisioning-runs/**
+  pull_request:
+    paths:
+      - .github/workflows/provision-standard-e2e-repositories.yml
+      - scripts/provision_standard_e2e_repositories.py
+      - tests/test_provision_standard_e2e_repositories.py
+      - config/standard-e2e-specs.json.gz.b64
+      - docs/standard-e2e-repository-provisioning.md
+      - docs/standard-e2e-provisioning-runs/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: provision-standard-e2e-repositories
+  cancel-in-progress: false
+
+jobs:
+  provision:
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Export the protected fleet PAT without logging it
+        shell: bash
+        env:
+          STORED_FLEET_PAT: ${{ secrets.FLEET_GH_TOKEN }}
+        run: |
+          set -euo pipefail
+          test -n "$STORED_FLEET_PAT"
+          printf 'GH_TOKEN=%s\n' "$STORED_FLEET_PAT" >> "$GITHUB_ENV"
+
+      - name: Check out without persisted credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          show-progress: false
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12'
+
+      - name: Validate GitHub Actions
+        uses: docker://rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667
+        with:
+          args: .github/workflows/provision-standard-e2e-repositories.yml
+
+      - name: Validate compressed specs, generated workflows, and named journeys
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONPATH=. python -m unittest discover \
+            -s tests \
+            -p 'test_provision_standard_e2e_repositories.py' \
+            -v
+          python -m py_compile \
+            scripts/provision_standard_e2e_repositories.py \
+            tests/test_provision_standard_e2e_repositories.py
+          mkdir -p artifacts
+          python scripts/provision_standard_e2e_repositories.py \
+            --specs config/standard-e2e-specs.json.gz.b64 \
+            --json-output artifacts/standard-e2e-plan.json \
+            --markdown-output artifacts/standard-e2e-plan.md
+
+      - name: Verify authenticated organization administration
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(gh api user --jq '.login')" = ORESoftware
+          for org in cliptown memebank meta-agents-demo unreal-unity-poc; do
+            test "$(gh api "user/memberships/orgs/$org" --jq '.state + ":" + .role')" = active:admin
+          done
+
+      - name: Create repositories, rotate read-only deploy keys, push branches, and open PRs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/provision_standard_e2e_repositories.py \
+            --specs config/standard-e2e-specs.json.gz.b64 \
+            --apply \
+            --json-output artifacts/standard-e2e-provisioning.json \
+            --markdown-output artifacts/standard-e2e-provisioning.md
+          cat artifacts/standard-e2e-provisioning.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload sanitized provisioning evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: standard-e2e-provisioning-${{ github.run_id }}
+          path: |
+            artifacts/standard-e2e-plan.json
+            artifacts/standard-e2e-plan.md
+            artifacts/standard-e2e-provisioning.json
+            artifacts/standard-e2e-provisioning.md
+          if-no-files-found: warn
+          retention-days: 30
