@@ -1,37 +1,27 @@
 # Fiducia Cloud test-fleet reconciliation
 
 Audit date: 2026-08-05
+Canonical source: `zed-pkg-test/zed-pkg-e2e` live 341-repository manifest
 
-The canonical portfolio declares one policy repository plus sixteen consumer, conformance, chaos, failover, scale, and bridge repositories for `fiducia-cloud-test`. The remote organization currently contains the policy repository and an additional TypeScript client harness.
+## Current result
 
-## Present
+The live portfolio declares **31 specialized repositories plus one public `.github` governance repository** for `fiducia-cloud-test`: **32 canonical repositories** in total.
 
-- `.github`
-- `fiducia-typescript-client-e2e` (preserved extra repository)
+The remote organization currently contains **32 repositories**, so the canonical count is complete. The independently added TypeScript client harness is preserved as part of the current fleet rather than overwritten.
 
-## Missing canonical certification repositories
+## Remaining verification
 
-- `rust-client-consumer`
-- `typescript-client-consumer`
-- `go-client-consumer`
-- `python-client-consumer`
-- `java-client-consumer`
-- `kotlin-client-consumer`
-- `dart-client-consumer`
-- `swift-client-consumer`
-- `gleam-client-consumer`
-- `erlang-client-consumer`
-- `package-ingestion-matrix`
-- `locks-leases-conformance`
-- `raft-network-chaos`
-- `cron-failover`
-- `websocket-scale`
-- `nats-dlq-bridge`
+Count completeness is established. Name-level drift should be checked against the deterministic canonical index proposed in `zed-pkg-test/zed-pkg-e2e#94`. Every canonical repository must preserve:
 
-## Hardening already in progress
+- immutable client/interface source pins or explicit source gates;
+- credential-free pull-request checks;
+- explicit scheduled/manual lanes for multi-node, scale, NATS, and provider-dependent execution; and
+- separate product, dependency, credential, and harness failure classifications.
+
+## Hardening in progress
 
 `fiducia-cloud-test/fiducia-typescript-client-e2e#2` adds executable stale-fence, retry/idempotency, redirect-refusal, leader-failover, WebSocket-resume, and NATS dead-letter replay contracts.
 
 ## Completion rule
 
-The fleet is not complete until every canonical repository exists with immutable source coordinates or an explicit source gate. Extra repositories are retained, and missing live credentials must be classified separately from product or harness failures.
+The fleet is complete when the exact canonical name set is present, generated bootstrap pull requests are merged in dependency order, and the language, conformance, chaos, scheduler, scale, and bridge lanes remain green. Extra repositories remain intact.
