@@ -1,0 +1,406 @@
+# One-time ciphertext-only handoff and paced cross-organization fleet execution.
+name: run cross-organization test fleet
+
+on:
+  push:
+    branches: [agent/run-cross-org-test-fleet]
+    paths:
+      - ".github/workflows/run-cross-org-test-fleet.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: run-cross-organization-test-fleet
+  cancel-in-progress: true
+
+jobs:
+  provision:
+    if: github.repository == 'fiducia-cloud-test/.github' && github.ref == 'refs/heads/agent/run-cross-org-test-fleet'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - name: Publish an ephemeral encryption key
+        id: publish
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_LOGIN: ORESoftware
+        run: |
+          set -euo pipefail
+          umask 077
+
+          handoff_branch="agent/cross-org-fleet-handoff-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          nonce="$(openssl rand -hex 32)"
+          expires_at="$(date -u -d '+20 minutes' '+%Y-%m-%dT%H:%M:%SZ')"
+          private_key="$RUNNER_TEMP/cross-org-fleet-private.pem"
+          public_key="$RUNNER_TEMP/cross-org-fleet-public.pem"
+          metadata="$RUNNER_TEMP/cross-org-fleet-metadata.json"
+
+          openssl genpkey -algorithm RSA \
+            -pkeyopt rsa_keygen_bits:4096 \
+            -out "$private_key" >/dev/null 2>&1
+          openssl pkey -in "$private_key" -pubout -out "$public_key"
+          fingerprint="$(openssl pkey -pubin -in "$public_key" -outform DER | sha256sum | awk '{print $1}')"
+
+          jq -n \
+            --arg repository "$GITHUB_REPOSITORY" \
+            --arg branch "$handoff_branch" \
+            --arg run_id "$GITHUB_RUN_ID" \
+            --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg source_sha "$GITHUB_SHA" \
+            --arg nonce "$nonce" \
+            --arg expected_login "$EXPECTED_LOGIN" \
+            --arg fingerprint_sha256 "$fingerprint" \
+            --arg expires_at "$expires_at" \
+            '{
+              repository: $repository,
+              branch: $branch,
+              run_id: $run_id,
+              run_attempt: $run_attempt,
+              source_sha: $source_sha,
+              nonce: $nonce,
+              expected_login: $expected_login,
+              fingerprint_sha256: $fingerprint_sha256,
+              expires_at: $expires_at,
+              algorithm: "RSA-OAEP-SHA256",
+              ciphertext_path: ".github/fleet-handoff/ciphertext.b64"
+            }' > "$metadata"
+
+          gh api --method POST "repos/$GITHUB_REPOSITORY/git/refs" \
+            -f ref="refs/heads/$handoff_branch" \
+            -f sha="$GITHUB_SHA" \
+            --silent
+
+          put_file() {
+            local source_path="$1"
+            local repository_path="$2"
+            local message="$3"
+            local encoded
+            encoded="$(base64 -w0 "$source_path")"
+            gh api --method PUT "repos/$GITHUB_REPOSITORY/contents/$repository_path" \
+              -f message="$message" \
+              -f content="$encoded" \
+              -f branch="$handoff_branch" \
+              --silent
+          }
+
+          put_file "$public_key" ".github/fleet-handoff/public.pem" \
+            "chore: publish cross-org fleet handoff key"
+          put_file "$metadata" ".github/fleet-handoff/metadata.json" \
+            "chore: publish cross-org fleet handoff metadata"
+
+          printf 'HANDOFF_BRANCH=%s\n' "$handoff_branch" >> "$GITHUB_ENV"
+          printf 'HANDOFF_NONCE=%s\n' "$nonce" >> "$GITHUB_ENV"
+          printf 'HANDOFF_PRIVATE_KEY=%s\n' "$private_key" >> "$GITHUB_ENV"
+
+          {
+            echo "## Encrypted cross-org token handoff ready"
+            echo
+            echo "Temporary branch: \`$handoff_branch\`"
+            echo
+            echo "Public-key fingerprint: \`$fingerprint\`"
+            echo
+            echo "Expires at: \`$expires_at\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Receive ciphertext and persist the encrypted fleet secret
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_LOGIN: ORESoftware
+        run: |
+          set -euo pipefail
+          umask 077
+
+          ciphertext_text="$RUNNER_TEMP/cross-org-fleet-ciphertext.b64"
+          ciphertext_binary="$RUNNER_TEMP/cross-org-fleet-ciphertext.bin"
+          payload_json="$RUNNER_TEMP/cross-org-fleet-payload.json"
+          found=false
+
+          for _ in $(seq 1 240); do
+            if response="$(gh api "repos/$GITHUB_REPOSITORY/contents/.github/fleet-handoff/ciphertext.b64?ref=$HANDOFF_BRANCH" 2>/dev/null)"; then
+              jq -r '.content' <<< "$response" | tr -d '\n' | base64 -d > "$ciphertext_text"
+              found=true
+              break
+            fi
+            sleep 5
+          done
+
+          if [[ "$found" != true ]]; then
+            echo "::error::No encrypted payload arrived before the handoff expired"
+            exit 1
+          fi
+
+          base64 -d "$ciphertext_text" > "$ciphertext_binary"
+          openssl pkeyutl -decrypt \
+            -inkey "$HANDOFF_PRIVATE_KEY" \
+            -in "$ciphertext_binary" \
+            -out "$payload_json" \
+            -pkeyopt rsa_padding_mode:oaep \
+            -pkeyopt rsa_oaep_md:sha256 \
+            -pkeyopt rsa_mgf1_md:sha256
+
+          payload_nonce="$(jq -er '.nonce | strings' "$payload_json")"
+          fleet_token="$(jq -er '.token | strings' "$payload_json")"
+
+          if [[ "$payload_nonce" != "$HANDOFF_NONCE" ]]; then
+            echo "::error::Encrypted payload nonce mismatch"
+            exit 1
+          fi
+          if (( ${#fleet_token} < 30 || ${#fleet_token} > 255 )); then
+            echo "::error::Encrypted payload did not contain a plausible GitHub token"
+            exit 1
+          fi
+          if [[ "$fleet_token" != ghp_* && "$fleet_token" != github_pat_* ]]; then
+            echo "::error::Encrypted payload token prefix is not recognized"
+            exit 1
+          fi
+
+          printf '::add-mask::%s\n' "$fleet_token"
+          authenticated_login="$(GH_TOKEN="$fleet_token" gh api user --jq '.login')"
+          if [[ "$authenticated_login" != "$EXPECTED_LOGIN" ]]; then
+            echo "::error::Token authenticated as an unexpected GitHub account"
+            exit 1
+          fi
+
+          organizations=(
+            zed-pkg-test
+            3fa-app-test
+            declarative-migrations-test
+            cliptown-test
+            claritas-viz-test
+            embedded-alerts-test
+            evento-globolo-test
+            fiducia-cloud-test
+            memebank-test
+            opto-sync-test
+            quaestor-ledger-test
+            sonus-auris-test
+            messaging-intel-test
+            scintilla-run-test
+            file-tunnel-test
+            shared-auth-test
+            hypesiege-test
+            streempilot-test
+          )
+          for organization in "${organizations[@]}"; do
+            GH_TOKEN="$fleet_token" gh api "orgs/$organization" --silent
+          done
+
+          printf '%s' "$fleet_token" \
+            | GH_TOKEN="$fleet_token" gh secret set FLEET_GH_TOKEN \
+                --repo "$GITHUB_REPOSITORY"
+          if ! GH_TOKEN="$fleet_token" gh secret list --repo "$GITHUB_REPOSITORY" \
+              | awk '{print $1}' | grep -Fxq FLEET_GH_TOKEN; then
+            echo "::error::The encrypted repository secret could not be verified"
+            exit 1
+          fi
+
+          printf 'GH_TOKEN=%s\n' "$fleet_token" >> "$GITHUB_ENV"
+          rm -f "$ciphertext_text" "$ciphertext_binary" "$payload_json"
+
+          {
+            echo
+            echo "The encrypted \`FLEET_GH_TOKEN\` secret was stored in \`$GITHUB_REPOSITORY\`."
+            echo
+            echo "The token authenticated as \`$authenticated_login\` and all 18 target organizations were visible."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Check out the immutable paced control plane
+        shell: bash
+        env:
+          CONTROL_COMMIT: dd3157606e3412e533da7b782393724038562bf3
+          QUEUED_ZED_RUN: "30974844610"
+        run: |
+          set -euo pipefail
+          control="$RUNNER_TEMP/zed-pkg-test-fleet-control"
+          git clone --quiet https://github.com/zed-pkg-test/zed-pkg-e2e.git "$control"
+          git -C "$control" checkout --quiet "$CONTROL_COMMIT"
+          printf 'CONTROL_ROOT=%s\n' "$control" >> "$GITHUB_ENV"
+
+          # Prevent the queued Zed-hosted executor from becoming a competing writer.
+          GH_TOKEN="$GH_TOKEN" gh api --method POST \
+            "repos/zed-pkg-test/zed-pkg-e2e/actions/runs/$QUEUED_ZED_RUN/cancel" \
+            --silent || true
+
+          cd "$control"
+          node --check scripts/list-test-org-fleet-repositories.mjs
+          node --check scripts/bootstrap-test-org-fleet-worktree-safe.mjs
+          node scripts/validate-test-org-fleet.mjs
+          node --test \
+            tests/test-org-fleet.test.mjs \
+            tests/bootstrap-retry-policy.test.mjs \
+            tests/paced-fleet-executor.test.mjs
+
+      - name: Provision the fleet one repository at a time
+        shell: bash
+        env:
+          TEST_ORG_FLEET_SKIP_TOPICS: "true"
+        run: |
+          set -euo pipefail
+          cd "$CONTROL_ROOT"
+
+          organizations=(
+            fiducia-cloud-test
+            evento-globolo-test
+            opto-sync-test
+            quaestor-ledger-test
+            memebank-test
+            scintilla-run-test
+            file-tunnel-test
+            shared-auth-test
+            hypesiege-test
+            streempilot-test
+            sonus-auris-test
+            messaging-intel-test
+            3fa-app-test
+            declarative-migrations-test
+            cliptown-test
+            claritas-viz-test
+            embedded-alerts-test
+          )
+          failures=()
+          processed=0
+          writes=0
+
+          {
+            echo
+            echo '## Paced cross-organization fleet completion'
+            echo
+            echo '| Organization | Specialized repos | Visible repos | Result |'
+            echo '|---|---:|---:|---:|'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          apply_filtered_repository() {
+            local organization="$1"
+            local repository="$2"
+            local summary_file="$RUNNER_TEMP/fleet-${organization}-${repository}.json"
+
+            for attempt in 1 2 3; do
+              rm -f "$summary_file"
+              if node scripts/bootstrap-test-org-fleet-worktree-safe.mjs \
+                  --apply \
+                  --org "$organization" \
+                  --repo "$repository" \
+                  --concurrency 1 \
+                  --summary-json > "$summary_file"; then
+                local request_writes
+                request_writes="$(jq '(.created // 0) + (.committed // 0) + (.pullRequests // 0)' "$summary_file")"
+                writes=$((writes + request_writes))
+                if [[ "$request_writes" -gt 0 ]]; then
+                  sleep 15
+                else
+                  sleep 2
+                fi
+                return 0
+              fi
+              [[ "$attempt" -lt 3 ]] && sleep $((attempt * 90))
+            done
+            return 1
+          }
+
+          finalize_organization() {
+            local organization="$1"
+            local summary_file="$RUNNER_TEMP/fleet-${organization}-final.json"
+            for attempt in 1 2 3; do
+              rm -f "$summary_file"
+              if node scripts/bootstrap-test-org-fleet-worktree-safe.mjs \
+                  --apply \
+                  --org "$organization" \
+                  --concurrency 1 \
+                  --summary-json > "$summary_file"; then
+                local request_writes
+                request_writes="$(jq '(.created // 0) + (.committed // 0) + (.pullRequests // 0)' "$summary_file")"
+                writes=$((writes + request_writes))
+                [[ "$request_writes" -gt 0 ]] && sleep 15
+                return 0
+              fi
+              [[ "$attempt" -lt 3 ]] && sleep $((attempt * 90))
+            done
+            return 1
+          }
+
+          for organization in "${organizations[@]}"; do
+            echo "::group::Paced provisioning for $organization"
+            gh api "orgs/$organization" --silent
+            mapfile -t repositories < <(node scripts/list-test-org-fleet-repositories.mjs --org "$organization")
+            organization_failed=false
+
+            for repository in "${repositories[@]}"; do
+              processed=$((processed + 1))
+              echo "[$processed/287] $organization/$repository"
+              if ! apply_filtered_repository "$organization" "$repository"; then
+                organization_failed=true
+                echo "::error::Failed to provision $organization/$repository after three idempotent attempts"
+              fi
+            done
+
+            if [[ "$organization_failed" == false ]] && ! finalize_organization "$organization"; then
+              organization_failed=true
+              echo "::error::Final governance/idempotency pass failed for $organization"
+            fi
+
+            visible="$(gh api --paginate "orgs/$organization/repos?type=all&per_page=100" --jq '.[].name' | wc -l | tr -d '[:space:]')"
+            if [[ "$organization_failed" == true ]]; then
+              failures+=("$organization")
+              printf '| `%s` | %s | %s | **failure** |\n' "$organization" "${#repositories[@]}" "$visible" >> "$GITHUB_STEP_SUMMARY"
+            else
+              printf '| `%s` | %s | %s | success |\n' "$organization" "${#repositories[@]}" "$visible" >> "$GITHUB_STEP_SUMMARY"
+            fi
+            echo "::endgroup::"
+          done
+
+          {
+            echo
+            echo "Specialized repository filters processed: $processed"
+            echo
+            echo "Observed create/commit/PR write operations: $writes"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if (( ${#failures[@]} > 0 )); then
+            printf '::error::Paced fleet completion failed for: %s\n' "${failures[*]}"
+            exit 1
+          fi
+          test "$processed" -eq 287
+
+      - name: Audit all 341 repositories, 319 generated branches, and 319 draft PRs
+        shell: bash
+        run: |
+          set -euo pipefail
+          audit="$RUNNER_TEMP/zed-pkg-test-fleet-audit"
+          git clone --quiet --depth=1 \
+            --branch agent/audit-generated-test-fleet \
+            https://github.com/zed-pkg-test/zed-pkg-e2e.git "$audit"
+          cd "$audit"
+
+          set +e
+          node scripts/audit-test-org-fleet-live.mjs \
+            --output "$RUNNER_TEMP/test-org-fleet-live-audit.json" \
+            --markdown "$RUNNER_TEMP/test-org-fleet-live-audit.md"
+          status=$?
+          set -e
+
+          cat "$RUNNER_TEMP/test-org-fleet-live-audit.md" >> "$GITHUB_STEP_SUMMARY"
+          jq -c '.summary' "$RUNNER_TEMP/test-org-fleet-live-audit.json"
+          exit "$status"
+
+      - name: Remove temporary handoff material
+        if: always()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set +e
+          rm -f \
+            "${HANDOFF_PRIVATE_KEY:-}" \
+            "$RUNNER_TEMP/cross-org-fleet-public.pem" \
+            "$RUNNER_TEMP/cross-org-fleet-metadata.json" \
+            "$RUNNER_TEMP/cross-org-fleet-ciphertext.b64" \
+            "$RUNNER_TEMP/cross-org-fleet-ciphertext.bin" \
+            "$RUNNER_TEMP/cross-org-fleet-payload.json"
+          if [[ -n "${HANDOFF_BRANCH:-}" ]]; then
+            gh api --method DELETE \
+              "repos/$GITHUB_REPOSITORY/git/refs/heads/${HANDOFF_BRANCH#refs/heads/}" \
+              --silent || true
+          fi
