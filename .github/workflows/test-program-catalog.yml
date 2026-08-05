@@ -1,0 +1,50 @@
+name: test program catalog
+
+on:
+  pull_request:
+    paths:
+      - "profile/README.md"
+      - "docs/EVERYTHING-E2E.md"
+      - "docs/PORTFOLIO-GAPS.md"
+      - "docs/PROJECTS.md"
+      - "test-program/**"
+      - "scripts/validate_test_program.py"
+      - "tests/test_validate_test_program.py"
+      - ".github/workflows/test-program-catalog.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "test-program/**"
+      - "scripts/validate_test_program.py"
+      - "tests/test_validate_test_program.py"
+      - ".github/workflows/test-program-catalog.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: test-program-catalog-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: validate truthful coverage catalog
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          show-progress: false
+
+      - name: Show Python runtime
+        run: python3 --version
+
+      - name: Validate catalog
+        run: python3 scripts/validate_test_program.py
+
+      - name: Run validator regression tests
+        run: python3 -m unittest discover -s tests -p 'test_validate_test_program.py' -v
