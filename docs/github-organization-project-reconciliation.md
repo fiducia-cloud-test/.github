@@ -37,6 +37,8 @@ The naming contract is `<GitHub organization login>-project`. Forty organization
 
 The reconciler fails closed for duplicate titles, an exact title at the wrong project number, a project created at a noncanonical number, missing project scope, missing organization-admin access, or incomplete Linear identity.
 
+The review branch intentionally receives a second push after the workflow file exists, ensuring GitHub evaluates the real reconciliation workflow rather than only the repository's pre-existing policy checks.
+
 ## Credential boundary
 
 Only GitHub Project metadata is reconciled by this workflow. Linear documentation is written through the connected Linear app, not by copying a Linear API key into this repository. Slack and ChatGPT are not mutated by this GitHub-only run.
