@@ -26,3 +26,13 @@ Ten language-specific SDK consumers plus package, protocol, Raft, cron, websocke
 | `nats-dlq-bridge` | interoperability | `ready` | `matrix` |
 
 Pull requests run deterministic harness checks. Emulators, desktop matrices, live APIs/providers, databases, chaos, scale, and soaks are scheduled/manual. Missing upstreams or credentials are blocked readiness—not false passes or product regressions.
+
+<!-- org-project-routing:start -->
+## Planning and delivery
+
+- [GitHub Project: fiducia-cloud-test-project](https://github.com/orgs/fiducia-cloud-test/projects/1)
+- [Linear planning project](https://linear.app/denman/project/githubcomfiducia-cloud-test-ad993264fa5e)
+- [Detailed project-routing contract](../docs/PROJECTS.md)
+
+GitHub owns code and delivery evidence; Linear owns planning and dependencies. The linked organization Project provides the cross-repository execution view.
+<!-- org-project-routing:end -->
