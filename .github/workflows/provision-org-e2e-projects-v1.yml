@@ -6,6 +6,7 @@ on:
     paths:
       - .github/workflows/provision-org-e2e-projects-v1.yml
       - .github/scripts/finish-declarative-e2e-v3.sh
+      - .github/scripts/finish-declarative-e2e-v4.sh
   workflow_dispatch:
 
 permissions:
@@ -37,7 +38,7 @@ jobs:
           printf 'GH_TOKEN=%s\n' "$STORED_FLEET_PAT" >> "$GITHUB_ENV"
       - name: Finish organization projects and Declarative Migrations E2E
         shell: bash
-        run: bash .github/scripts/finish-declarative-e2e-v3.sh
+        run: bash .github/scripts/finish-declarative-e2e-v4.sh
       - name: Publish the provisioning audit artifact
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
