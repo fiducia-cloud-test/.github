@@ -2,7 +2,7 @@ name: reconcile GitHub organization projects
 
 on:
   push:
-    branches: [agent/reconcile-organization-projects]
+    branches: [main, agent/reconcile-organization-projects]
     paths:
       - .github/workflows/reconcile-organization-projects.yml
       - scripts/reconcile_github_projects.py
