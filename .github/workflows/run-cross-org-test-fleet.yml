@@ -61,7 +61,7 @@ jobs:
       - name: Check out and validate the corrected immutable control plane
         shell: bash
         env:
-          CONTROL_COMMIT: b6216e843dd4b83ca807e0290957cce29e2c124e
+          CONTROL_COMMIT: 5b1239c6d990332f85318d28ccc26e060a27832d
           QUEUED_ZED_RUN: "30974844610"
         run: |
           set -euo pipefail
@@ -81,7 +81,8 @@ jobs:
           node --test \
             tests/test-org-fleet.test.mjs \
             tests/bootstrap-retry-policy.test.mjs \
-            tests/paced-fleet-executor.test.mjs
+            tests/paced-fleet-executor.test.mjs \
+            tests/generated-plan-validator-gitlinks.test.mjs
 
       - name: Provision the fleet one repository at a time
         shell: bash
