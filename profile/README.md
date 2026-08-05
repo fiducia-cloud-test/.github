@@ -40,10 +40,9 @@ Skipped or blocked work never increases maturity.
 <!-- org-project-routing:start -->
 ## Planning and delivery
 
-- [Shared Linear project: fiducia-cloud](https://linear.app/denman/project/fiducia-cloud-8fd5e1bec9d3)
-- [Everything E2E program issue](https://linear.app/denman/issue/DEN-2353/e2e-program-certify-every-fiducia-production-surface-through)
 - [GitHub Project: fiducia-cloud-test-project](https://github.com/orgs/fiducia-cloud-test/projects/1)
-- [Production GitHub Project](https://github.com/orgs/fiducia-cloud/projects/1)
+- [Linear planning project](https://linear.app/denman/project/githubcomfiducia-cloud-test-ad993264fa5e)
+- [Detailed project-routing contract](../docs/PROJECTS.md)
 
-Linear owns outcomes, priorities, dependencies, milestones, and release-readiness status. The GitHub Project owns cross-repository test execution. Pull requests, workflow runs, immutable pins, evidence bundles, releases, and deployment attestations are the implementation record.
+GitHub owns code and delivery evidence; Linear owns planning and dependencies. The linked organization Project provides the cross-repository execution view.
 <!-- org-project-routing:end -->
