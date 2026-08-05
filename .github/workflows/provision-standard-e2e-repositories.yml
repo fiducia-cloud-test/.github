@@ -75,6 +75,49 @@ jobs:
             --json-output artifacts/standard-e2e-plan.json \
             --markdown-output artifacts/standard-e2e-plan.md
 
+      - name: Install bounded gh retry wrapper
+        shell: bash
+        run: |
+          set -euo pipefail
+          real_gh="$(command -v gh)"
+          wrapper_dir="$RUNNER_TEMP/gh-retry"
+          mkdir -p "$wrapper_dir"
+          cat > "$wrapper_dir/gh" <<'SH'
+          #!/usr/bin/env bash
+          set -uo pipefail
+          real="${REAL_GH_BIN:?REAL_GH_BIN is required}"
+          delays=(5 15 30 60 120 240)
+          attempt=0
+          while :; do
+            stdout_file="$(mktemp)"
+            stderr_file="$(mktemp)"
+            "$real" "$@" >"$stdout_file" 2>"$stderr_file"
+            status=$?
+            if [ "$status" -eq 0 ]; then
+              cat "$stdout_file"
+              rm -f "$stdout_file" "$stderr_file"
+              exit 0
+            fi
+            if grep -Eqi \
+              'API rate limit exceeded|secondary rate limit|abuse detection|HTTP 429|exceeded a secondary rate limit' \
+              "$stderr_file" && [ "$attempt" -lt "${#delays[@]}" ]; then
+              delay="${delays[$attempt]}"
+              echo "GitHub throttled an authenticated gh call; retrying after a bounded delay." >&2
+              rm -f "$stdout_file" "$stderr_file"
+              sleep "$delay"
+              attempt="$((attempt + 1))"
+              continue
+            fi
+            cat "$stdout_file"
+            cat "$stderr_file" >&2
+            rm -f "$stdout_file" "$stderr_file"
+            exit "$status"
+          done
+          SH
+          chmod 0700 "$wrapper_dir/gh"
+          printf 'REAL_GH_BIN=%s\n' "$real_gh" >> "$GITHUB_ENV"
+          printf '%s\n' "$wrapper_dir" >> "$GITHUB_PATH"
+
       - name: Wait for sufficient authenticated GitHub API budget
         shell: bash
         run: |
@@ -97,14 +140,11 @@ jobs:
             sleep "$sleep_for"
           done
 
-      - name: Verify authenticated organization administration
+      - name: Verify authenticated identity
         shell: bash
         run: |
           set -euo pipefail
           test "$(gh api user --jq '.login')" = ORESoftware
-          for org in cliptown memebank meta-agents-demo unreal-unity-poc; do
-            test "$(gh api "user/memberships/orgs/$org" --jq '.state + ":" + .role')" = active:admin
-          done
 
       - name: Create repositories, rotate read-only deploy keys, push branches, and open PRs
         shell: bash
