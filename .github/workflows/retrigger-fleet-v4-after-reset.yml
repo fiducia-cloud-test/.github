@@ -1,0 +1,46 @@
+name: retrigger fleet v4 after primary reset
+
+on:
+  push:
+    branches: [agent/retrigger-fleet-v4-after-reset]
+    paths:
+      - .github/workflows/retrigger-fleet-v4-after-reset.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: retrigger-fleet-v4-after-primary-reset
+  cancel-in-progress: false
+
+jobs:
+  retrigger:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Wait past the recorded reset and retrigger the repair branch
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_BRANCH: agent/repair-and-audit-cross-org-fleet-v4
+          TARGET_PATH: .github/workflows/repair-and-audit-cross-org-fleet-v4.yml
+        run: |
+          set -euo pipefail
+          target_epoch="$(date -u -d '2026-08-05T06:38:30Z' +%s)"
+          now="$(date -u +%s)"
+          if (( now < target_epoch )); then
+            sleep $((target_epoch - now))
+          fi
+
+          response="$(gh api "repos/$GITHUB_REPOSITORY/contents/$TARGET_PATH?ref=$TARGET_BRANCH")"
+          sha="$(jq -r '.sha' <<< "$response")"
+          source="$RUNNER_TEMP/repair-v4.yml"
+          jq -r '.content' <<< "$response" | tr -d '\n' | base64 -d > "$source"
+          printf '\n# reset-window-retrigger: %s\n' "$GITHUB_RUN_ID" >> "$source"
+
+          gh api --method PUT "repos/$GITHUB_REPOSITORY/contents/$TARGET_PATH" \
+            -f message="ci: retrigger fleet repair after primary reset" \
+            -f content="$(base64 -w0 "$source")" \
+            -f sha="$sha" \
+            -f branch="$TARGET_BRANCH" \
+            --silent
