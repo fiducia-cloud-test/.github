@@ -1,0 +1,55 @@
+name: audit cross-organization test fleet live now
+
+on:
+  push:
+    branches: [agent/audit-cross-org-fleet-live-now]
+    paths:
+      - .github/workflows/audit-cross-org-test-fleet-live-now.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: audit-cross-organization-test-fleet-live-now
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Export the persisted fleet PAT without logging it
+        shell: bash
+        env:
+          STORED_FLEET_PAT: ${{ secrets.FLEET_GH_TOKEN }}
+        run: |
+          set -euo pipefail
+          test -n "$STORED_FLEET_PAT"
+          printf 'GH_TOKEN=%s\n' "$STORED_FLEET_PAT" >> "$GITHUB_ENV"
+
+      - name: Run the exact live fleet audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(gh api user --jq '.login')" = ORESoftware
+
+          audit="$RUNNER_TEMP/zed-pkg-test-fleet-audit"
+          git clone --quiet --depth=1 \
+            --branch agent/audit-generated-test-fleet \
+            https://github.com/zed-pkg-test/zed-pkg-e2e.git "$audit"
+          cd "$audit"
+
+          set +e
+          node scripts/audit-test-org-fleet-live.mjs \
+            --output "$RUNNER_TEMP/test-org-fleet-live-audit.json" \
+            --markdown "$RUNNER_TEMP/test-org-fleet-live-audit.md"
+          status=$?
+          set -e
+
+          cat "$RUNNER_TEMP/test-org-fleet-live-audit.md" >> "$GITHUB_STEP_SUMMARY"
+          echo 'AUDIT_JSON_SUMMARY'
+          jq -c '.summary' "$RUNNER_TEMP/test-org-fleet-live-audit.json"
+          echo 'AUDIT_ORGANIZATION_ERRORS'
+          jq -c '.organizations[] | select(.errors | length > 0) | {testOrg, expectedRepositories, visibleRepositories, verifiedGenerated, expectedGenerated, openGeneratedPullRequests, errors}' \
+            "$RUNNER_TEMP/test-org-fleet-live-audit.json"
+          exit "$status"
