@@ -1,0 +1,40 @@
+name: diagnose fleet token rate limit
+
+on:
+  push:
+    branches: [agent/diagnose-fleet-rate-limit]
+    paths:
+      - .github/workflows/diagnose-fleet-rate-limit.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: diagnose-fleet-rate-limit
+  cancel-in-progress: true
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Inspect PAT primary quota without mutation
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.FLEET_GH_TOKEN }}
+        run: |
+          set -euo pipefail
+          test -n "$GH_TOKEN"
+          test "$(gh api user --jq '.login')" = ORESoftware
+          gh api rate_limit --jq '
+            .resources
+            | {
+                core: .core,
+                search: .search,
+                graphql: .graphql,
+                integration_manifest: .integration_manifest,
+                source_import: .source_import
+              }
+          '
+          gh api rate_limit --jq '.resources.core.reset' \
+            | xargs -I{} date -u -d @{} '+core_reset_utc=%Y-%m-%dT%H:%M:%SZ'
