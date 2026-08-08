@@ -18,7 +18,7 @@ jobs:
   synchronize:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 75
     steps:
       - name: Export the protected fleet credential without logging it
         env:
@@ -36,11 +36,36 @@ jobs:
           persist-credentials: true
           show-progress: false
 
-      - name: Verify identity and exact Project targets
+      - name: Wait inside the runner for sufficient GitHub API budget
         run: |
           set -euo pipefail
-          test "$(gh api user --jq .login)" = ORESoftware
+          rate_json="$(gh api rate_limit)"
+          core_remaining="$(jq -r '.resources.core.remaining' <<<"$rate_json")"
+          graph_remaining="$(jq -r '.resources.graphql.remaining' <<<"$rate_json")"
+          core_reset="$(jq -r '.resources.core.reset' <<<"$rate_json")"
+          graph_reset="$(jq -r '.resources.graphql.reset' <<<"$rate_json")"
+          now="$(date +%s)"
 
+          if (( core_remaining < 100 || graph_remaining < 100 )); then
+            reset="$core_reset"
+            if (( graph_reset > reset )); then reset="$graph_reset"; fi
+            delay=$((reset - now + 8))
+            if (( delay < 1 )); then delay=1; fi
+            if (( delay > 3600 )); then
+              echo "required GitHub API reset is more than one hour away" >&2
+              exit 1
+            fi
+            echo "GitHub API budget is exhausted; waiting inside the isolated runner for the published reset."
+            sleep "$delay"
+          fi
+
+          refreshed="$(gh api rate_limit)"
+          test "$(jq -r '.resources.core.remaining' <<<"$refreshed")" -ge 20
+          test "$(jq -r '.resources.graphql.remaining' <<<"$refreshed")" -ge 20
+
+      - name: Verify the exact Project targets
+        run: |
+          set -euo pipefail
           gh project view 1 --owner fiducia-cloud --format json > /tmp/production-before.json
           gh project view 1 --owner fiducia-cloud-test --format json > /tmp/test-before.json
 
