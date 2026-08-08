@@ -1,0 +1,88 @@
+name: Project routing contract
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/project-routing-contract.yml
+      - docs/PROJECTS.md
+      - profile/README.md
+      - tests/test_project_routing.py
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/project-routing-contract.yml
+      - docs/PROJECTS.md
+      - profile/README.md
+      - tests/test_project_routing.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: project-routing-contract-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SHARED_LINEAR_URL: https://linear.app/denman/project/githubcomfiducia-cloud-8fd5e1bec9d3
+      CENTRAL_REGISTRY_COMMIT: 3bacc022f938fb859f7991f2b5bde80f264bcf02
+    steps:
+      - name: Check out without persisted credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          show-progress: false
+
+      - name: Run credential-free routing tests
+        run: |
+          set -euo pipefail
+          python3 -m py_compile tests/test_project_routing.py
+          python3 -m unittest tests/test_project_routing.py -v
+          ! grep -RInE \
+            'gh[pousr]_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]{20,}|Authorization:[[:space:]]*Bearer[[:space:]]+[A-Za-z0-9._-]+' \
+            docs/PROJECTS.md profile/README.md tests/test_project_routing.py
+
+      - name: Verify the immutable central registry through authenticated gh
+        run: |
+          set -euo pipefail
+          gh api \
+            "repos/ORESoftware/k8s-cluster/contents/ops/portfolio/github-linear-project-registry.tsv?ref=${CENTRAL_REGISTRY_COMMIT}" \
+            --jq .content \
+            | tr -d '\n' \
+            | base64 --decode \
+            > /tmp/github-linear-project-registry.tsv
+
+          test "$(awk -F '\t' -v url="$SHARED_LINEAR_URL" '$1 == "fiducia-cloud" && $2 == url { count++ } END { print count + 0 }' /tmp/github-linear-project-registry.tsv)" = 1
+          test "$(awk -F '\t' -v url="$SHARED_LINEAR_URL" '$1 == "fiducia-cloud-test" && $2 == url { count++ } END { print count + 0 }' /tmp/github-linear-project-registry.tsv)" = 1
+          test "$(awk -F '\t' -v url="$SHARED_LINEAR_URL" '$2 == url { count++ } END { print count + 0 }' /tmp/github-linear-project-registry.tsv)" = 2
+
+      - name: Build redacted routing evidence
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          jq -n \
+            --arg schema_version fiducia-project-routing-evidence.v1 \
+            --arg production_org fiducia-cloud \
+            --arg test_org fiducia-cloud-test \
+            --arg shared_linear_url "$SHARED_LINEAR_URL" \
+            --arg production_project_url https://github.com/orgs/fiducia-cloud/projects/1 \
+            --arg test_project_url https://github.com/orgs/fiducia-cloud-test/projects/1 \
+            --arg central_registry_commit "$CENTRAL_REGISTRY_COMMIT" \
+            --arg repository "$GITHUB_REPOSITORY" \
+            --arg head_sha "$GITHUB_SHA" \
+            --arg generated_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{schema_version:$schema_version,production_org:$production_org,test_org:$test_org,shared_linear_url:$shared_linear_url,production_project_url:$production_project_url,test_project_url:$test_project_url,central_registry_commit:$central_registry_commit,repository:$repository,head_sha:$head_sha,generated_at:$generated_at,shared_planning_verified:true,separate_execution_projects_verified:true,credential_material_present:false}' \
+            > artifacts/fiducia-project-routing-evidence.json
+
+      - name: Upload routing evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: fiducia-project-routing-${{ github.run_id }}
+          path: artifacts/fiducia-project-routing-evidence.json
+          if-no-files-found: error
+          retention-days: 30
