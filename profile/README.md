@@ -41,8 +41,10 @@ Skipped or blocked work never increases maturity.
 ## Planning and delivery
 
 - [GitHub Project: fiducia-cloud-test-project](https://github.com/orgs/fiducia-cloud-test/projects/1)
-- [Linear planning project](https://linear.app/denman/project/githubcomfiducia-cloud-test-ad993264fa5e)
+- [Shared Linear planning project: github.com/fiducia-cloud](https://linear.app/denman/project/githubcomfiducia-cloud-8fd5e1bec9d3)
+- [Production organization: fiducia-cloud](https://github.com/fiducia-cloud)
+- [Production GitHub Project: fiducia-cloud-project](https://github.com/orgs/fiducia-cloud/projects/1)
 - [Detailed project-routing contract](../docs/PROJECTS.md)
 
-GitHub owns code and delivery evidence; Linear owns planning and dependencies. The linked organization Project provides the cross-repository execution view.
+Linear is the single planning authority for both organizations. The test organization retains its own GitHub Project, repositories, CI history, workflow runs, immutable source pins, and evidence bundles so black-box acceptance remains independently attributable. Do not create work in the canceled `fiducia-cloud-test (superseded)` Linear shell.
 <!-- org-project-routing:end -->
