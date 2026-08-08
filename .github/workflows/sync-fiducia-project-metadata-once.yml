@@ -1,0 +1,141 @@
+name: Synchronize Fiducia GitHub Project metadata once
+
+on:
+  push:
+    branches:
+      - ops/den-2275-project-metadata-20260808
+    paths:
+      - .github/workflows/sync-fiducia-project-metadata-once.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-fiducia-project-metadata-once
+  cancel-in-progress: false
+
+jobs:
+  synchronize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Export the protected fleet credential without logging it
+        env:
+          STORED_FLEET_TOKEN: ${{ secrets.FLEET_GH_TOKEN }}
+        run: |
+          set -euo pipefail
+          test -n "$STORED_FLEET_TOKEN"
+          printf 'GH_TOKEN=%s\n' "$STORED_FLEET_TOKEN" >> "$GITHUB_ENV"
+
+      - name: Check out the isolated operations branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ops/den-2275-project-metadata-20260808
+          fetch-depth: 0
+          persist-credentials: true
+          show-progress: false
+
+      - name: Verify identity and exact Project targets
+        run: |
+          set -euo pipefail
+          test "$(gh api user --jq .login)" = ORESoftware
+
+          gh project view 1 --owner fiducia-cloud --format json > /tmp/production-before.json
+          gh project view 1 --owner fiducia-cloud-test --format json > /tmp/test-before.json
+
+          test "$(jq -r .number /tmp/production-before.json)" = 1
+          test "$(jq -r .title /tmp/production-before.json)" = fiducia-cloud-project
+          test "$(jq -r .number /tmp/test-before.json)" = 1
+          test "$(jq -r .title /tmp/test-before.json)" = fiducia-cloud-test-project
+
+      - name: Apply one planning authority and two delivery-board descriptions
+        env:
+          SHARED_LINEAR_URL: https://linear.app/denman/project/githubcomfiducia-cloud-8fd5e1bec9d3
+          CENTRAL_REGISTRY_MERGE: 3bacc022f938fb859f7991f2b5bde80f264bcf02
+        run: |
+          set -euo pipefail
+          cat > /tmp/production-readme.md <<EOF
+          # fiducia-cloud delivery
+
+          This Project is the production delivery view for locks, leases, consensus, scheduling, SDKs, releases, migrations, and product-side verification.
+
+          - Shared planning authority: [Linear — github.com/fiducia-cloud](${SHARED_LINEAR_URL})
+          - Independent certification board: [fiducia-cloud-test-project](https://github.com/orgs/fiducia-cloud-test/projects/1)
+          - Organization context: [fiducia-cloud/.github](https://github.com/fiducia-cloud/.github)
+          - Canonical routing registry: [ORESoftware/k8s-cluster@${CENTRAL_REGISTRY_MERGE}](https://github.com/ORESoftware/k8s-cluster/blob/${CENTRAL_REGISTRY_MERGE}/ops/portfolio/github-linear-project-registry.tsv)
+
+          GitHub is authoritative for commits, pull requests, CI, releases, deployments, and artifacts. Linear is authoritative for priorities, dependencies, milestones, ownership, acceptance, and status. Independent black-box certification remains in the test organization rather than being inferred from production checks.
+          EOF
+
+          cat > /tmp/test-readme.md <<EOF
+          # fiducia-cloud-test certification
+
+          This Project is the independent black-box acceptance and release-certification view for Fiducia production artifacts and interfaces.
+
+          - Shared planning authority: [Linear — github.com/fiducia-cloud](${SHARED_LINEAR_URL})
+          - Production delivery board: [fiducia-cloud-project](https://github.com/orgs/fiducia-cloud/projects/1)
+          - Test-organization context: [fiducia-cloud-test/.github](https://github.com/fiducia-cloud-test/.github)
+          - Canonical routing registry: [ORESoftware/k8s-cluster@${CENTRAL_REGISTRY_MERGE}](https://github.com/ORESoftware/k8s-cluster/blob/${CENTRAL_REGISTRY_MERGE}/ops/portfolio/github-linear-project-registry.tsv)
+
+          Linear is shared for planning, but repositories, Project items, workflow runs, immutable source and artifact pins, chaos/recovery lanes, and retained evidence remain independently attributable to this test organization. Skipped, missing-route, or credential-blocked workflows never count as certification.
+          EOF
+
+          gh project edit 1 \
+            --owner fiducia-cloud \
+            --description 'Production delivery for Fiducia; planning is shared in the github.com/fiducia-cloud Linear project and independent certification remains in fiducia-cloud-test.' \
+            --readme "$(cat /tmp/production-readme.md)"
+
+          gh project edit 1 \
+            --owner fiducia-cloud-test \
+            --description 'Independent Fiducia acceptance and release certification; planning is shared with fiducia-cloud while evidence remains isolated in this test-org Project.' \
+            --readme "$(cat /tmp/test-readme.md)"
+
+      - name: Verify exact postconditions and build redacted evidence
+        env:
+          SHARED_LINEAR_URL: https://linear.app/denman/project/githubcomfiducia-cloud-8fd5e1bec9d3
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          gh project view 1 --owner fiducia-cloud --format json > artifacts/production-project.json
+          gh project view 1 --owner fiducia-cloud-test --format json > artifacts/test-project.json
+
+          for file in artifacts/production-project.json artifacts/test-project.json; do
+            test "$(jq -r .number "$file")" = 1
+            jq -e --arg url "$SHARED_LINEAR_URL" '.readme | contains($url)' "$file" >/dev/null
+          done
+          jq -e '.readme | contains("fiducia-cloud-test-project")' artifacts/production-project.json >/dev/null
+          jq -e '.readme | contains("fiducia-cloud-project")' artifacts/test-project.json >/dev/null
+          jq -e '.readme | contains("credential-blocked workflows never count as certification")' artifacts/test-project.json >/dev/null
+
+          jq -n \
+            --arg schema_version fiducia-github-project-metadata-evidence.v1 \
+            --arg production_title "$(jq -r .title artifacts/production-project.json)" \
+            --arg production_url "$(jq -r .url artifacts/production-project.json)" \
+            --arg test_title "$(jq -r .title artifacts/test-project.json)" \
+            --arg test_url "$(jq -r .url artifacts/test-project.json)" \
+            --arg shared_linear_url "$SHARED_LINEAR_URL" \
+            --arg generated_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{schema_version:$schema_version,production_project:{title:$production_title,url:$production_url,number:1},test_project:{title:$test_title,url:$test_url,number:1},shared_linear_url:$shared_linear_url,separate_execution_boards:true,credential_material_present:false,generated_at:$generated_at}' \
+            > artifacts/fiducia-project-metadata-evidence.json
+
+          rm artifacts/production-project.json artifacts/test-project.json
+
+      - name: Upload redacted Project metadata evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: fiducia-project-metadata-${{ github.run_id }}
+          path: artifacts/fiducia-project-metadata-evidence.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Remove the one-time operations carrier
+        run: |
+          set -euo pipefail
+          rm .github/workflows/sync-fiducia-project-metadata-once.yml
+          git diff --check
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m 'ci(DEN-2275): remove Project metadata synchronization carrier'
+          git push origin HEAD:ops/den-2275-project-metadata-20260808
