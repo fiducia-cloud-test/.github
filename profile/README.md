@@ -48,3 +48,15 @@ Skipped or blocked work never increases maturity.
 
 Linear is the single planning authority for both organizations. The test organization retains its own GitHub Project, repositories, CI history, workflow runs, immutable source pins, and evidence bundles so black-box acceptance remains independently attributable. Do not create work in the canceled `fiducia-cloud-test (superseded)` Linear shell.
 <!-- org-project-routing:end -->
+
+
+<!-- ore-org-baseline:begin -->
+## Planning and governance
+
+- Canonical Linear project: https://linear.app/denman/project/githubcomfiducia-cloud-8fd5e1bec9d3
+- Organization defaults: https://github.com/fiducia-cloud-test/.github
+- Canonical agent policy: https://github.com/fiducia-cloud-test/.github/blob/main/agents.md
+- Security policy: https://github.com/fiducia-cloud-test/.github/security/policy
+
+Repositories in this organization use semantic conflict resolution with 3–10 relevant prior commits when useful, full cross-repository context, pull-request delivery, and a hard automated-agent denylist for destructive or history-rewriting operations.
+<!-- ore-org-baseline:end -->
