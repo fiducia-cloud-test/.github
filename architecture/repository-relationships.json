@@ -1,0 +1,628 @@
+{
+  "$schema": "./repository-relationships.schema.json",
+  "composition_policy": {
+    "dual_managed_invariant": "gitlink SHA must equal the source commit in the Zed lock entry",
+    "editable_source_composition": "git-submodules",
+    "package_and_artifact_resolution": "zed-pkg",
+    "production_deployment_resolution": "immutable OCI image digest or signed artifact",
+    "production_source_checkout": "forbidden as a runtime deployment mechanism"
+  },
+  "inventory_scope": "public-repositories-plus-role-contracts",
+  "observability_policy": {
+    "logs": "structured output with trace_id/span_id correlation",
+    "metrics": "Prometheus-compatible bounded-cardinality metrics",
+    "required_resource_attributes": [
+      "service.name",
+      "service.namespace",
+      "service.version",
+      "deployment.environment",
+      "vcs.ref.head.revision"
+    ],
+    "traces": "OpenTelemetry with W3C trace context"
+  },
+  "organization": "fiducia-cloud-test",
+  "privacy": {
+    "private_repository_count": 11,
+    "private_repository_names_published": false,
+    "public_repository_names_published": true,
+    "reason": "The public .github registry intentionally withholds private repository names and edges."
+  },
+  "registry_repository": "fiducia-cloud-test/.github",
+  "relationships": [
+    {
+      "from": "fiducia-cloud-test/.github",
+      "kind": "governs",
+      "rationale": "organization defaults, safety, and relationship declarations",
+      "source_basis": "role-convention",
+      "status": "inferred",
+      "to": "fiducia-cloud-test/api-contract-e2e"
+    },
+    {
+      "from": "fiducia-cloud-test/.github",
+      "kind": "governs",
+      "rationale": "organization defaults, safety, and relationship declarations",
+      "source_basis": "role-convention",
+      "status": "inferred",
+      "to": "fiducia-cloud-test/auth-tenant-isolation-e2e"
+    },
+    {
+      "from": "fiducia-cloud-test/.github",
+      "kind": "governs",
+      "rationale": "organization defaults, safety, and relationship declarations",
+      "source_basis": "role-convention",
+      "status": "inferred",
+      "to": "fiducia-cloud-test/cli-contract-e2e"
+    },
+    {
+      "from": "fiducia-cloud-test/.github",
+      "kind": "governs",
+      "rationale": "organization defaults, safety, and relationship declarations",
+      "source_basis": "role-convention",
+      "status": "inferred",
+      "to": "fiducia-cloud-test/control-plane-e2e"
+    },
+    {
+      "from": "fiducia-cloud-test/.github",
+      "kind": "governs",
+      "rationale": "organization defaults, safety, and relationship declarations",
+      "source_basis": "role-convention",
+      "status": "inferred",
+      "to": "fiducia-cloud-test/cron-failover-e2e"
+    },
+    {
+      "from": "fiducia-cloud-test/.github",
+      "kind": "governs",
+      "rationale": "organization defaults, safety, and relationship declarations",
+      "source_basis": "role-convention",
+      "status": "inferred",
+      "to": "fiducia-cloud-test/edge-partition-e2e"
+    },
+    {
+      "from": "fiducia-cloud-test/.github",
+      "kind": "governs",
+      "rationale": "organization defaults, safety, and relationship declarations",
+      "source_basis": "role-convention",
+      "status": "inferred",
+      "to": "fiducia-cloud-test/fiducia-csharp-client-e2e"
+    },
+    {
+      "from": "fiducia-cloud-test/.github",
+      "kind": "governs",
+      "rationale": "organization defaults, safety, and relationship declarations",
+      "source_basis": "role-convention",
+      "status": "inferred",
+      "to": "fiducia-cloud-test/fiducia-dart-client-e2e"
+    },
+    {
+      "from": "fiducia-cloud-test/.github",
+      "kind": "governs",
+      "rationale": "organization defaults, safety, and relationship declarations",
+      "source_basis": "role-convention",
+      "status": "inferred",
+      "to": "fiducia-cloud-test/fiducia-gleam-client-e2e"
+    },
+    {
+      "from": "fiducia-cloud-test/.github",
+      "kind": "governs",
+      "rationale": "organization defaults, safety, and relationship declarations",
+      "source_basis": "role-convention",
+      "status": "inferred",
+      "to": "fiducia-cloud-test/fiducia-go-client-e2e"
+    },
+    {
+      "from": "fiducia-cloud-test/.github",
+      "kind": "governs",
+      "rationale": "organization defaults, safety, and relationship declarations",
+      "source_basis": "role-convention",
+      "status": "inferred",
+      "to": "fiducia-cloud-test/fiducia-java-client-e2e"
+    },
+    {
+      "from": "fiducia-cloud-test/.github",
+      "kind": "governs",
+      "rationale": "organization defaults, safety, and relationship declarations",
+      "source_basis": "role-convention",
+      "status": "inferred",
+      "to": "fiducia-cloud-test/fiducia-kotlin-client-e2e"
+    },
+    {
+      "from": "fiducia-cloud-test/.github",
+      "kind": "governs",
+      "rationale": "organization defaults, safety, and relationship declarations",
+      "source_basis": "role-convention",
+      "status": "inferred",
+      "to": "fiducia-cloud-test/fiducia-python-client-e2e"
+    },
+    {
+      "from": "fiducia-cloud-test/.github",
+      "kind": "governs",
+      "rationale": "organization defaults, safety, and relationship declarations",
+      "source_basis": "role-convention",
+      "status": "inferred",
+      "to": "fiducia-cloud-test/fiducia-rust-client-e2e"
+    },
+    {
+      "from": "fiducia-cloud-test/.github",
+      "kind": "governs",
+      "rationale": "organization defaults, safety, and relationship declarations",
+      "source_basis": "role-convention",
+      "status": "inferred",
+      "to": "fiducia-cloud-test/fiducia-swift-client-e2e"
+    },
+    {
+      "from": "fiducia-cloud-test/.github",
+      "kind": "governs",
+      "rationale": "organization defaults, safety, and relationship declarations",
+      "source_basis": "role-convention",
+      "status": "inferred",
+      "to": "fiducia-cloud-test/fiducia-typescript-client-e2e"
+    },
+    {
+      "from": "fiducia-cloud-test/.github",
+      "kind": "governs",
+      "rationale": "organization defaults, safety, and relationship declarations",
+      "source_basis": "role-convention",
+      "status": "inferred",
+      "to": "fiducia-cloud-test/idempotency-replay-e2e"
+    },
+    {
+      "from": "fiducia-cloud-test/.github",
+      "kind": "governs",
+      "rationale": "organization defaults, safety, and relationship declarations",
+      "source_basis": "role-convention",
+      "status": "inferred",
+      "to": "fiducia-cloud-test/infra-multicloud-e2e"
+    },
+    {
+      "from": "fiducia-cloud-test/.github",
+      "kind": "governs",
+      "rationale": "organization defaults, safety, and relationship declarations",
+      "source_basis": "role-convention",
+      "status": "inferred",
+      "to": "fiducia-cloud-test/lambda-service-e2e"
+    },
+    {
+      "from": "fiducia-cloud-test/.github",
+      "kind": "governs",
+      "rationale": "organization defaults, safety, and relationship declarations",
+      "source_basis": "role-convention",
+      "status": "inferred",
+      "to": "fiducia-cloud-test/locks-leases-fencing-e2e"
+    },
+    {
+      "from": "fiducia-cloud-test/.github",
+      "kind": "governs",
+      "rationale": "organization defaults, safety, and relationship declarations",
+      "source_basis": "role-convention",
+      "status": "inferred",
+      "to": "fiducia-cloud-test/mcp-contract-e2e"
+    },
+    {
+      "from": "fiducia-cloud-test/.github",
+      "kind": "governs",
+      "rationale": "organization defaults, safety, and relationship declarations",
+      "source_basis": "role-convention",
+      "status": "inferred",
+      "to": "fiducia-cloud-test/memory-resize-e2e"
+    },
+    {
+      "from": "fiducia-cloud-test/.github",
+      "kind": "governs",
+      "rationale": "organization defaults, safety, and relationship declarations",
+      "source_basis": "role-convention",
+      "status": "inferred",
+      "to": "fiducia-cloud-test/messaging-nats-dlq-e2e"
+    },
+    {
+      "from": "fiducia-cloud-test/.github",
+      "kind": "governs",
+      "rationale": "organization defaults, safety, and relationship declarations",
+      "source_basis": "role-convention",
+      "status": "inferred",
+      "to": "fiducia-cloud-test/payments-idempotency-e2e"
+    },
+    {
+      "from": "fiducia-cloud-test/.github",
+      "kind": "governs",
+      "rationale": "organization defaults, safety, and relationship declarations",
+      "source_basis": "role-convention",
+      "status": "inferred",
+      "to": "fiducia-cloud-test/raft-consensus-chaos-e2e"
+    },
+    {
+      "from": "fiducia-cloud-test/.github",
+      "kind": "governs",
+      "rationale": "organization defaults, safety, and relationship declarations",
+      "source_basis": "role-convention",
+      "status": "inferred",
+      "to": "fiducia-cloud-test/routing-leader-election-e2e"
+    },
+    {
+      "from": "fiducia-cloud-test/.github",
+      "kind": "governs",
+      "rationale": "organization defaults, safety, and relationship declarations",
+      "source_basis": "role-convention",
+      "status": "inferred",
+      "to": "fiducia-cloud-test/semaphores-rate-limit-e2e"
+    },
+    {
+      "from": "fiducia-cloud-test/.github",
+      "kind": "governs",
+      "rationale": "organization defaults, safety, and relationship declarations",
+      "source_basis": "role-convention",
+      "status": "inferred",
+      "to": "fiducia-cloud-test/service-discovery-watch-e2e"
+    },
+    {
+      "from": "fiducia-cloud-test/.github",
+      "kind": "governs",
+      "rationale": "organization defaults, safety, and relationship declarations",
+      "source_basis": "role-convention",
+      "status": "inferred",
+      "to": "fiducia-cloud-test/sync-convergence-e2e"
+    },
+    {
+      "from": "fiducia-cloud-test/.github",
+      "kind": "governs",
+      "rationale": "organization defaults, safety, and relationship declarations",
+      "source_basis": "role-convention",
+      "status": "inferred",
+      "to": "fiducia-cloud-test/telemetry-otel-e2e"
+    },
+    {
+      "from": "fiducia-cloud-test/.github",
+      "kind": "governs",
+      "rationale": "organization defaults, safety, and relationship declarations",
+      "source_basis": "role-convention",
+      "status": "inferred",
+      "to": "fiducia-cloud-test/websocket-scale-e2e"
+    },
+    {
+      "from": "organization://fiducia-cloud-test",
+      "kind": "packaged_via",
+      "rationale": "Zed resolves artifacts while submodules compose editable source",
+      "source_basis": "platform-policy",
+      "status": "platform-default",
+      "to": "platform://zed-pkg"
+    }
+  ],
+  "repositories": [
+    {
+      "archived": false,
+      "default_branch": "main",
+      "fork": false,
+      "full_name": "fiducia-cloud-test/.github",
+      "lifecycle": "active",
+      "name": ".github",
+      "role": "organization_governance",
+      "visibility": "public"
+    },
+    {
+      "archived": false,
+      "default_branch": "main",
+      "fork": false,
+      "full_name": "fiducia-cloud-test/api-contract-e2e",
+      "lifecycle": "active",
+      "name": "api-contract-e2e",
+      "role": "interfaces",
+      "visibility": "public"
+    },
+    {
+      "archived": false,
+      "default_branch": "main",
+      "fork": false,
+      "full_name": "fiducia-cloud-test/cli-contract-e2e",
+      "lifecycle": "active",
+      "name": "cli-contract-e2e",
+      "role": "interfaces",
+      "visibility": "public"
+    },
+    {
+      "archived": false,
+      "default_branch": "main",
+      "fork": false,
+      "full_name": "fiducia-cloud-test/mcp-contract-e2e",
+      "lifecycle": "active",
+      "name": "mcp-contract-e2e",
+      "role": "interfaces",
+      "visibility": "public"
+    },
+    {
+      "archived": false,
+      "default_branch": "main",
+      "fork": false,
+      "full_name": "fiducia-cloud-test/auth-tenant-isolation-e2e",
+      "lifecycle": "active",
+      "name": "auth-tenant-isolation-e2e",
+      "role": "end_to_end_tests",
+      "visibility": "public"
+    },
+    {
+      "archived": false,
+      "default_branch": "main",
+      "fork": false,
+      "full_name": "fiducia-cloud-test/control-plane-e2e",
+      "lifecycle": "active",
+      "name": "control-plane-e2e",
+      "role": "end_to_end_tests",
+      "visibility": "public"
+    },
+    {
+      "archived": false,
+      "default_branch": "main",
+      "fork": false,
+      "full_name": "fiducia-cloud-test/cron-failover-e2e",
+      "lifecycle": "active",
+      "name": "cron-failover-e2e",
+      "role": "end_to_end_tests",
+      "visibility": "public"
+    },
+    {
+      "archived": false,
+      "default_branch": "main",
+      "fork": false,
+      "full_name": "fiducia-cloud-test/edge-partition-e2e",
+      "lifecycle": "active",
+      "name": "edge-partition-e2e",
+      "role": "end_to_end_tests",
+      "visibility": "public"
+    },
+    {
+      "archived": false,
+      "default_branch": "main",
+      "fork": false,
+      "full_name": "fiducia-cloud-test/fiducia-csharp-client-e2e",
+      "lifecycle": "active",
+      "name": "fiducia-csharp-client-e2e",
+      "role": "end_to_end_tests",
+      "visibility": "public"
+    },
+    {
+      "archived": false,
+      "default_branch": "main",
+      "fork": false,
+      "full_name": "fiducia-cloud-test/fiducia-dart-client-e2e",
+      "lifecycle": "active",
+      "name": "fiducia-dart-client-e2e",
+      "role": "end_to_end_tests",
+      "visibility": "public"
+    },
+    {
+      "archived": false,
+      "default_branch": "main",
+      "fork": false,
+      "full_name": "fiducia-cloud-test/fiducia-gleam-client-e2e",
+      "lifecycle": "active",
+      "name": "fiducia-gleam-client-e2e",
+      "role": "end_to_end_tests",
+      "visibility": "public"
+    },
+    {
+      "archived": false,
+      "default_branch": "main",
+      "fork": false,
+      "full_name": "fiducia-cloud-test/fiducia-go-client-e2e",
+      "lifecycle": "active",
+      "name": "fiducia-go-client-e2e",
+      "role": "end_to_end_tests",
+      "visibility": "public"
+    },
+    {
+      "archived": false,
+      "default_branch": "main",
+      "fork": false,
+      "full_name": "fiducia-cloud-test/fiducia-java-client-e2e",
+      "lifecycle": "active",
+      "name": "fiducia-java-client-e2e",
+      "role": "end_to_end_tests",
+      "visibility": "public"
+    },
+    {
+      "archived": false,
+      "default_branch": "main",
+      "fork": false,
+      "full_name": "fiducia-cloud-test/fiducia-kotlin-client-e2e",
+      "lifecycle": "active",
+      "name": "fiducia-kotlin-client-e2e",
+      "role": "end_to_end_tests",
+      "visibility": "public"
+    },
+    {
+      "archived": false,
+      "default_branch": "main",
+      "fork": false,
+      "full_name": "fiducia-cloud-test/fiducia-python-client-e2e",
+      "lifecycle": "active",
+      "name": "fiducia-python-client-e2e",
+      "role": "end_to_end_tests",
+      "visibility": "public"
+    },
+    {
+      "archived": false,
+      "default_branch": "main",
+      "fork": false,
+      "full_name": "fiducia-cloud-test/fiducia-rust-client-e2e",
+      "lifecycle": "active",
+      "name": "fiducia-rust-client-e2e",
+      "role": "end_to_end_tests",
+      "visibility": "public"
+    },
+    {
+      "archived": false,
+      "default_branch": "main",
+      "fork": false,
+      "full_name": "fiducia-cloud-test/fiducia-swift-client-e2e",
+      "lifecycle": "active",
+      "name": "fiducia-swift-client-e2e",
+      "role": "end_to_end_tests",
+      "visibility": "public"
+    },
+    {
+      "archived": false,
+      "default_branch": "main",
+      "fork": false,
+      "full_name": "fiducia-cloud-test/fiducia-typescript-client-e2e",
+      "lifecycle": "active",
+      "name": "fiducia-typescript-client-e2e",
+      "role": "end_to_end_tests",
+      "visibility": "public"
+    },
+    {
+      "archived": false,
+      "default_branch": "main",
+      "fork": false,
+      "full_name": "fiducia-cloud-test/idempotency-replay-e2e",
+      "lifecycle": "active",
+      "name": "idempotency-replay-e2e",
+      "role": "end_to_end_tests",
+      "visibility": "public"
+    },
+    {
+      "archived": false,
+      "default_branch": "main",
+      "fork": false,
+      "full_name": "fiducia-cloud-test/infra-multicloud-e2e",
+      "lifecycle": "active",
+      "name": "infra-multicloud-e2e",
+      "role": "end_to_end_tests",
+      "visibility": "public"
+    },
+    {
+      "archived": false,
+      "default_branch": "main",
+      "fork": false,
+      "full_name": "fiducia-cloud-test/lambda-service-e2e",
+      "lifecycle": "active",
+      "name": "lambda-service-e2e",
+      "role": "end_to_end_tests",
+      "visibility": "public"
+    },
+    {
+      "archived": false,
+      "default_branch": "main",
+      "fork": false,
+      "full_name": "fiducia-cloud-test/locks-leases-fencing-e2e",
+      "lifecycle": "active",
+      "name": "locks-leases-fencing-e2e",
+      "role": "end_to_end_tests",
+      "visibility": "public"
+    },
+    {
+      "archived": false,
+      "default_branch": "main",
+      "fork": false,
+      "full_name": "fiducia-cloud-test/memory-resize-e2e",
+      "lifecycle": "active",
+      "name": "memory-resize-e2e",
+      "role": "end_to_end_tests",
+      "visibility": "public"
+    },
+    {
+      "archived": false,
+      "default_branch": "main",
+      "fork": false,
+      "full_name": "fiducia-cloud-test/messaging-nats-dlq-e2e",
+      "lifecycle": "active",
+      "name": "messaging-nats-dlq-e2e",
+      "role": "end_to_end_tests",
+      "visibility": "public"
+    },
+    {
+      "archived": false,
+      "default_branch": "main",
+      "fork": false,
+      "full_name": "fiducia-cloud-test/payments-idempotency-e2e",
+      "lifecycle": "active",
+      "name": "payments-idempotency-e2e",
+      "role": "end_to_end_tests",
+      "visibility": "public"
+    },
+    {
+      "archived": false,
+      "default_branch": "main",
+      "fork": false,
+      "full_name": "fiducia-cloud-test/raft-consensus-chaos-e2e",
+      "lifecycle": "active",
+      "name": "raft-consensus-chaos-e2e",
+      "role": "end_to_end_tests",
+      "visibility": "public"
+    },
+    {
+      "archived": false,
+      "default_branch": "main",
+      "fork": false,
+      "full_name": "fiducia-cloud-test/routing-leader-election-e2e",
+      "lifecycle": "active",
+      "name": "routing-leader-election-e2e",
+      "role": "end_to_end_tests",
+      "visibility": "public"
+    },
+    {
+      "archived": false,
+      "default_branch": "main",
+      "fork": false,
+      "full_name": "fiducia-cloud-test/semaphores-rate-limit-e2e",
+      "lifecycle": "active",
+      "name": "semaphores-rate-limit-e2e",
+      "role": "end_to_end_tests",
+      "visibility": "public"
+    },
+    {
+      "archived": false,
+      "default_branch": "main",
+      "fork": false,
+      "full_name": "fiducia-cloud-test/service-discovery-watch-e2e",
+      "lifecycle": "active",
+      "name": "service-discovery-watch-e2e",
+      "role": "end_to_end_tests",
+      "visibility": "public"
+    },
+    {
+      "archived": false,
+      "default_branch": "main",
+      "fork": false,
+      "full_name": "fiducia-cloud-test/sync-convergence-e2e",
+      "lifecycle": "active",
+      "name": "sync-convergence-e2e",
+      "role": "end_to_end_tests",
+      "visibility": "public"
+    },
+    {
+      "archived": false,
+      "default_branch": "main",
+      "fork": false,
+      "full_name": "fiducia-cloud-test/telemetry-otel-e2e",
+      "lifecycle": "active",
+      "name": "telemetry-otel-e2e",
+      "role": "end_to_end_tests",
+      "visibility": "public"
+    },
+    {
+      "archived": false,
+      "default_branch": "main",
+      "fork": false,
+      "full_name": "fiducia-cloud-test/websocket-scale-e2e",
+      "lifecycle": "active",
+      "name": "websocket-scale-e2e",
+      "role": "end_to_end_tests",
+      "visibility": "public"
+    }
+  ],
+  "role_contracts": {
+    "api_service": "Owns public APIs, webhooks, authorization, validation, and orchestration.",
+    "client_sdk": "Depends on interfaces and exposes generated clients plus thin wrappers.",
+    "composition_workspace": "Composes source repositories and records the release BOM.",
+    "end_to_end_tests": "Runs black-box compatibility and user-flow checks.",
+    "infrastructure": "Owns product cloud resources; promotion remains GitOps-controlled.",
+    "interfaces": "Own OpenAPI, events, JSON Schema, compatibility fixtures, and DTO inputs.",
+    "mcp_server": "Calls product SDKs/APIs; no parallel domain persistence.",
+    "sync_service": "Owns product conflict policy/adapters and wraps Opto reconciliation.",
+    "web_bff": "Owns browser sessions, CSRF, HTML/SSR, and calls the product API."
+  },
+  "schema_version": "1.0.0",
+  "service_boundary_policy": {
+    "cross_service_database_access": "forbidden-by-default",
+    "mcp_database_access": "forbidden-by-default; MCP calls the product API/SDK",
+    "preferred_cross_service_calls": "typed API/SDK, event, or owned replicated read model"
+  }
+}
