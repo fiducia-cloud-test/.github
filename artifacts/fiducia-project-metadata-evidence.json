@@ -1,0 +1,17 @@
+{
+  "schema_version": "fiducia-github-project-metadata-evidence.v1",
+  "production_project": {
+    "title": "fiducia-cloud-project",
+    "url": "https://github.com/orgs/fiducia-cloud/projects/1",
+    "number": 1
+  },
+  "test_project": {
+    "title": "fiducia-cloud-test-project",
+    "url": "https://github.com/orgs/fiducia-cloud-test/projects/1",
+    "number": 1
+  },
+  "shared_linear_url": "https://linear.app/denman/project/githubcomfiducia-cloud-8fd5e1bec9d3",
+  "separate_execution_boards": true,
+  "credential_material_present": false,
+  "generated_at": "2026-08-08T23:28:15Z"
+}
