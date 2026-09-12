@@ -1,0 +1,28 @@
+name: cancel redundant test-fleet publishers
+
+on:
+  push:
+    branches: [agent/run-cross-org-test-fleet]
+    paths:
+      - ".github/workflows/cancel-redundant-test-fleet-publishers.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  cancel:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Cancel obsolete publishers
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.FLEET_GH_TOKEN }}
+        run: |
+          set -euo pipefail
+          test "$(gh api user --jq '.login')" = ORESoftware
+          for run_id in 30974029929 30975398132; do
+            gh api --method POST \
+              "repos/ORESoftware/k8s-cluster/actions/runs/${run_id}/cancel" \
+              --silent || true
+          done
