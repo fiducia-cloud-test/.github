@@ -25,4 +25,4 @@ jobs:
       interfaces_path: fiducia-interfaces
       interfaces_dependency: fiducia-cloud/fiducia-interfaces
     secrets:
-      read_token: ${{ secrets.TEST_ORG_READ_TOKEN }}
+      read_token: ${{ secrets.TEST_FLEET_READ_TOKEN || secrets.TEST_ORG_READ_TOKEN || github.token }}
