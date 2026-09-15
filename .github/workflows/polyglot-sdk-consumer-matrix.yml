@@ -1,7 +1,6 @@
 name: Polyglot SDK consumer matrix
 
 on:
-  pull_request:
   push:
     branches: [main]
   schedule:
